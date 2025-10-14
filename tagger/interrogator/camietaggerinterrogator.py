@@ -54,6 +54,10 @@ class CamieTaggerInterrogator(AbsInterrogator):
 
         with open(tags_path, 'r', encoding='utf-8') as filen:
             self.metadata = json.load(filen)
+            
+        if self.name == "Camie Tagger v2":
+            self.metadata['idx_to_tag'] = self.metadata['dataset_info']['tag_mapping']['idx_to_tag']
+            self.metadata['tag_to_category'] = self.metadata['dataset_info']['tag_mapping']['tag_to_category']
 
     def interrogate(
         self,
@@ -89,27 +93,24 @@ class CamieTaggerInterrogator(AbsInterrogator):
         initial_probs: np.ndarray = 1.0 / (1.0 + np.exp(-outputs[0]))  # Apply sigmoid
         refined_probs: np.ndarray = 1.0 / (1.0 + np.exp(-outputs[1])) if len(outputs) > 1 else initial_probs
 
-        # Get top tags
-        indices = np.atleast_1d(refined_probs[0]).nonzero()[0]
-
-        # Group by category
-        tags_by_category = {}
-        for idx in indices:
-            idx_str = str(idx)
-            tag_name = self.metadata['idx_to_tag'].get(idx_str, f"unknown-{idx}")
-            category = self.metadata['tag_to_category'].get(tag_name, "general")
-
-            if category not in tags_by_category:
-                tags_by_category[category] = []
-
+        # Create a dictionary of all tags and their probabilities
+        all_tags = {}
+        for idx_str, tag_name in self.metadata['idx_to_tag'].items():
+            idx = int(idx_str)
             prob = float(refined_probs[0, idx])
-            tags_by_category[category].append((tag_name, prob))
+            all_tags[tag_name] = prob
 
-        # 'year', 'rating', 'general', 'character', 'copyright', 'artist', 'meta'
-        rating_tags = dict(tags_by_category.get('rating', []))
-        general_tags = dict(tags_by_category.get('general', []))
+        # Separate ratings from other tags
+        rating_tags = {}
+        other_tags = {}
+        for tag_name, prob in all_tags.items():
+            category = self.metadata['tag_to_category'].get(tag_name, "general")
+            if category == 'rating':
+                rating_tags[tag_name] = prob
+            else:
+                other_tags[tag_name] = prob
 
-        return rating_tags, general_tags
+        return rating_tags, other_tags
 
 def preprocess_image(img: Image.Image, image_size: int = 512) -> np.ndarray:
     """

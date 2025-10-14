@@ -80,4 +80,10 @@ interrogators: dict[str, AbsInterrogator] = {
         model_path='model_initial.onnx',
         tags_path='model_initial_metadata.json'
     ),
+    'camie-tagger-v2': CamieTaggerInterrogator(
+            'Camie Tagger v2',
+        repo_id='Camais03/camie-tagger-v2',
+        model_path='camie-tagger-v2.onnx',
+        tags_path='camie-tagger-v2-metadata.json'
+    ),
 }
