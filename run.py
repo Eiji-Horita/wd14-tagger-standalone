@@ -164,6 +164,7 @@ if args.dir:
         tags_str = ', '.join(tags.keys())
         tags_str = tags_str + "\n"
         with open(caption_path, 'w') as fp:
+            fp.write(f'{image_path.suffix}\n')
             fp.write(tags_str)
 
 if args.file:
