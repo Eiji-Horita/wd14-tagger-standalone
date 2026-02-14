@@ -59,6 +59,11 @@ parser.add_argument(
     default='wd14-convnextv2.v1',
     metavar='MODELNAME',
     help='modelname to use for prediction (default is wd14-convnextv2.v1)')
+parser.add_argument(
+    '--filter',
+    type=int,
+    default=0,
+    help='use filter flag, default 0')
 args = parser.parse_args()
 
 # get interrogator configs
@@ -92,6 +97,28 @@ def parse_additional_tags() -> list[str]:
         for tag in str.split(','):
             tags.append(tag.strip())
     return list(set(tags))
+
+def filter_out_hair_tags(tags: dict[str, float]) -> dict[str, float]:
+    """
+    Remove tags that contain 'hair' as a word
+    """
+    filtered_tags = {}
+    for tag in tags:
+        # Check if 'hair' is a word in the tag (separated by underscores)
+        words = tag.split(' ')
+        if 'cover' in words:
+            continue
+        if args.filter == 1:
+            if 'hair' in words:
+                continue
+            if 'ponytail' in words:
+                continue
+            if 'eyes' in words:
+                continue
+            if '\\(fate\\)' in words:
+                continue
+        filtered_tags[tag] = tags[tag]
+    return filtered_tags
 
 def image_interrogate(image_path: Path, tag_escape: bool, exclude_tags: Iterable[str], additional_tags: list[str]) -> dict[str, float]:
     """
@@ -130,14 +157,21 @@ if args.dir:
 
         print('processing:', image_path)
         tags = image_interrogate(image_path, not args.rawtag, parse_exclude_tags(), parse_additional_tags())
+        
+        # Filter out tags containing 'hair' as a word
+        tags = filter_out_hair_tags(tags)
 
         tags_str = ', '.join(tags.keys())
-
+        tags_str = tags_str + "\n"
         with open(caption_path, 'w') as fp:
             fp.write(tags_str)
 
 if args.file:
     tags = image_interrogate(Path(args.file), not args.rawtag, parse_exclude_tags(), parse_additional_tags())
+    
+    # Filter out tags containing 'hair' as a word
+    tags = filter_out_hair_tags(tags)
+    
     print(file=sys.stderr)
     tags_str = ', '.join(tags.keys())
     print(tags_str)
