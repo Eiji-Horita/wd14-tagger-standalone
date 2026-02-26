@@ -23,7 +23,7 @@ function delete_strings($line, $del_str_list) {
 	return implode(',', $result);
 
 }
-$del_str_list = array("ribbon", "hairclip", "shiny", "bangs", "twintails");
+$del_str_list = array("ribbon", "hairclip", "shiny", "bangs", "twintails", "twin braids", "braid","artist name","web address","realistic","copyright name","logo","watermark");
 $idx = 0;
 $first = 0;
 for ($i = 1 ; $i < $argc ; $i++) {
